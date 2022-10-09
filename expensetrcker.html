@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense tracker</title>
+    <style>
+        fieldset {
+             background-color: #eeeeee;
+        }
+
+        legend {
+           background-color: gray;
+           color: white;
+           padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <form id="mytracker" onsubmit="storetoLocalStorage(event)">
+        <fieldset>
+            <legend>Expenses</legend>
+        <label for=":"> ExpenseAmount</label><br>
+        <input type="number" id="amount" name="amount" required><br><br>
+        <label for="description">Spend on</label><br>
+        <input type="text" id="desc" name="desc" required><br><br>
+        <label for="expenses">Choose a category:</label><br>
+        <select id="category" name="category">
+            <option value="food">Food</option>
+            <option value="fuel">Fuel</option>
+            <option value="movie">Movie</option>
+            <option value="electricity">Electricity</option>
+            <option value="shopping">Shopping</option>
+          </select><br><br>
+          <input type="submit" value="Add Expense"> 
+        </fieldset> 
+    </form>
+    <ul id="listOfUsers"></ul>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
+    <script>
+        function storetoLocalStorage(event){
+            event.preventDefault();
+            const amount = event.target.amount.value;
+            const desc = event.target.desc.value;
+            const category = event.target.category.value;
+
+            const mytracker = {
+                amount,
+                desc,
+                category
+            };
+            axios.post("https://crudcrud.com/api/8d2ec03b542b496ca15e412461088a7a/expensesData",mytracker)
+                 .then((response) => {
+                    shownewusers(response.data)
+                 })
+                 .catch((err) => console.log(err))
+
+        };
+
+        window.addEventListener(('DOMContentLoaded'),() =>{
+            axios.get("https://crudcrud.com/api/8d2ec03b542b496ca15e412461088a7a/expensesData")
+                 .then((response) => {
+                    console.log(response)
+
+                    for(var i = 0; i < response.data.length; i++){
+                        shownewusers(response.data[i]);
+                    }
+                 })
+                 .catch((err) => console.log(err))
+        });
+
+        function shownewusers(user){
+            document.getElementById('amount').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('desc').value = '';
+
+            const parentNode = document.getElementById('listOfUsers');
+            const childHTML = `<li id = ${user._id}> ${user.amount} - ${user.category} - ${user.desc}
+                               <button onclick = deleteExpenses('${user._id}')>Delete</button>
+                               <button onclick = editExpensesDetails('${user.category}','${user.amount}','${user.desc}','${user._id}')>Edit</button>
+                               </li>`
+            parentNode.innerHTML = parentNode.innerHTML+childHTML;
+        };
+
+        function editExpensesDetails(category,amount,desc,userId){
+            document.getElementById('category').value = category;
+            document.getElementById('amount').value = amount;
+            document.getElementById('desc').value = desc;
+
+            deleteExpenses(userId);
+        };
+
+        function deleteExpenses(userId){
+            axios.delete(`https://crudcrud.com/api/8d2ec03b542b496ca15e412461088a7a/${userId}`)
+                 .then((response) => {
+                    removeExpensesFromScreen(userId)
+                 })
+                 .catch((err) => console.log(err))
+        };
+
+        function removeExpensesFromScreen(userId){
+            const parentNode = document.getElementById('listOfUsers');
+            const childNodeToBeDeleted = document.getElementById(userId);
+            if(childNodeToBeDeleted) {
+                parentNode.removeChild(childNodeToBeDeleted)
+            }
+        } 
+    </script>
+</body>
+</html>
